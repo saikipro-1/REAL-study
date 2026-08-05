@@ -1,99 +1,126 @@
- <!doctype html>
- <html lang="en">
-   <head>
-     <meta charset="UTF-8" />
-     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-     <meta name="description" content="StudyOS: a calm, living focus ritual." />
-     <title>StudyOS</title>
-     <link rel="stylesheet" href="style.css" />
-   </head>
-   <body>
-     <main class="study-os scene-idle" id="studyOS">
-       <div class="sky" aria-hidden="true"><i class="sun-moon"></i><div class="stars"></div></div>
- 
-       <header class="hud" aria-label="Your study stats">
-         <div class="brand"><span>STUDY</span>OS <small>Your quiet system for deep work</small></div>
-         <div class="metrics" aria-label="Your study progress">
-           <div class="metric-card">
-             <span class="metric-label">STREAK</span>
-             <strong id="streakCount">0 days</strong>
-             <div class="streak-flame" id="streakFlame" aria-hidden="true">🔥</div>
-           </div>
-           <div class="metric-card">
-             <span class="metric-label">DEEP WORK</span>
-             <strong id="hoursCount">0.0 hrs</strong>
-           </div>
-           <div class="metric-card">
-             <span class="metric-label">TODAY</span>
-             <strong id="todayPomodoros">0 sessions</strong>
-           </div>
-           <div class="streak-bar-wrap" aria-label="Last 7 days">
-             <span class="metric-label">LAST 7 DAYS</span>
-             <div class="streak-bar" id="streakBar" aria-hidden="true">
-               <span></span><span></span><span></span><span></span>
-               <span></span><span></span><span></span>
-             </div>
-           </div>
-         </div>
-       </header>
- 
-       <aside class="phone-policy" aria-label="No phone policy"><span aria-hidden="true">&#x26A1;</span><div><strong>NO PHONE</strong><small>out of reach</small></div></aside>
- 
-       <section class="wall-focus" id="wallFocus" aria-live="polite" aria-label="Wall staring ritual">
-         <div class="wall-dot" aria-hidden="true"></div>
-         <time id="wallTimer" datetime="PT3M">03:00</time>
-       </section>
- 
-       <section class="desk" aria-label="Your virtual study desk">
-         <div class="tree decor" id="tree" aria-label="Your focus tree"><div class="tree-crown"><i></i><i></i><i></i></div><b></b><em></em></div>
-         <div class="mug decor" aria-hidden="true"><span class="steam"><i></i><i></i><i></i></span><b></b><i class="coffee"></i></div>
-         <div class="pencils decor" aria-hidden="true"><i></i><i></i></div>
- 
-         <article class="book" id="book" aria-live="polite">
-           <div class="book-cover">
-             <p>STUDYOS</p>
-             <button id="coverStart" type="button" aria-label="Begin your study ritual"><span>&#9654;</span> Begin the ritual</button>
-             <small>One quiet reset. Then deep work.</small>
-           </div>
-           <section class="page page-left">
-             <p class="eyebrow">CURRENT RITUAL</p>
-             <div class="phase-mark" id="phaseMark" aria-hidden="true">&#9675;</div>
-             <p class="phase-label" id="phaseLabel">Wall stare</p>
-             <p class="phase-detail" id="phaseDetail">Settle in. Let your mind get quiet.</p>
-             <div class="tree-status"><span id="treeMessage">Your focus tree is a seedling.</span><strong id="sessionCount">0</strong><small>Pomodoros</small></div>
-           </section>
- 
-           <section class="page page-right">
-             <p class="eyebrow" id="rightEyebrow">BEGIN WITH STILLNESS</p>
-             <h1 id="headline">Look at the wall.<br />Do nothing else.</h1>
-             <p class="reason" id="reason">Three quiet minutes create a clean edge between everyday noise and focused work.</p>
-             <div class="break-thought" id="breakThought" hidden><span>THOUGHT FOR THE PAUSE</span><q id="quoteText"></q></div>
-             <time class="timer" id="timer" datetime="PT3M">03:00</time>
-             <div class="timer-rule"><span id="progressBar"></span></div>
-             <div class="controls"><button class="button button-primary" id="startButton" type="button">Start ritual</button><button class="button button-quiet" id="resetButton" type="button">Reset</button></div>
-           </section>
-         </article>
-       </section>
- 
-       <section class="sound-dock" aria-label="Ambient sounds">
-         <span>AMBIENCE</span>
-         <button type="button" data-ambient="rain">Rain</button>
-         <button type="button" data-ambient="cafe">Caf&eacute;</button>
-         <button type="button" data-ambient="forest">Forest</button>
-         <button type="button" data-ambient="brown">Brown</button>
-         <button type="button" data-ambient="off" class="sound-off">Off</button>
-       </section>
-       <p class="desk-note">One task. One breath. One page at a time.</p>
- 
-       <div class="completion" id="completion" aria-live="assertive" aria-hidden="true">
-         <div>
-           <span>&#10022;</span>
-           <p>Focus session complete</p>
-           <strong>Another ring for your tree.</strong>
-           <div class="completion-streak" id="completionStreak"></div>
-         </div>
-       </div>
-     </main>
-     <script src="script.js"></script>
-   </body>
- </html>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="StudyOS: a calm, living focus ritual." />
+    <title>StudyOS</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="study-os scene-idle" id="studyOS">
+      <div class="sky" aria-hidden="true"><i class="sun-moon"></i><div class="stars"></div></div>
+
+      <!-- ── HUD ── -->
+      <header class="hud" aria-label="Your study stats">
+        <div class="brand"><span>STUDY</span>OS <small>Your quiet system for deep work</small></div>
+
+        <!-- Streak dropdown trigger -->
+        <button class="streak-toggle" id="streakToggle" type="button" aria-expanded="false" aria-controls="streakPanel">
+          <span class="streak-toggle-flame" id="streakFlame" aria-hidden="true">🔥</span>
+          <span class="metric-label">STREAK</span>
+          <strong id="streakCount">0 days</strong>
+          <svg class="streak-chevron" width="10" height="6" viewBox="0 0 10 6" aria-hidden="true"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>
+        </button>
+
+        <!-- Streak dropdown panel -->
+        <div class="streak-panel" id="streakPanel" aria-hidden="true">
+          <div class="streak-panel-inner">
+            <div class="streak-stat-row">
+              <div class="streak-stat"><span class="metric-label">TOTAL DAYS</span><strong id="streakDaysTotal">0</strong></div>
+              <div class="streak-stat"><span class="metric-label">DEEP WORK</span><strong id="hoursCount">0.0 hrs</strong></div>
+              <div class="streak-stat"><span class="metric-label">TODAY</span><strong id="todayPomodoros">0 sessions</strong></div>
+            </div>
+            <div class="streak-bar-section">
+              <span class="metric-label">LAST 7 DAYS</span>
+              <div class="streak-bar" id="streakBar" aria-label="Last 7 days activity">
+                <span></span><span></span><span></span><span></span>
+                <span></span><span></span><span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <aside class="phone-policy" aria-label="No phone policy"><span aria-hidden="true">&#x26A1;</span><div><strong>NO PHONE</strong><small>out of reach</small></div></aside>
+
+      <!-- ── Wall-focus overlay ── -->
+      <section class="wall-focus" id="wallFocus" aria-live="polite" aria-label="Wall staring ritual">
+        <div class="wall-dot" aria-hidden="true"></div>
+        <time id="wallTimer" datetime="PT3M">03:00</time>
+        <p class="wall-caption">Staring at a wall clears your brain from the dopamine and stimulation from reels that fills every part of our lives.</p>
+      </section>
+
+      <!-- ── Wall-done interstitial ── -->
+      <div class="wall-done" id="wallDone" aria-hidden="true">
+        <div class="wall-done-card">
+          <p class="wall-done-eyebrow">RESET COMPLETE</p>
+          <h2 class="wall-done-title">Your mind is clear.<br>Now go deep.</h2>
+          <p class="wall-done-body">Three minutes of stillness create a clean edge between everyday noise and focused work. You're ready.</p>
+          <button class="button button-primary wall-done-btn" id="wallDoneBtn" type="button">Begin deep work &#8594;</button>
+        </div>
+      </div>
+
+      <!-- ── Desk ── -->
+      <section class="desk" aria-label="Your virtual study desk">
+        <div class="tree decor" id="tree" aria-label="Your focus tree"><div class="tree-crown"><i></i><i></i><i></i></div><b></b><em></em></div>
+        <div class="mug decor" aria-hidden="true"><span class="steam"><i></i><i></i><i></i></span><b></b><i class="coffee"></i></div>
+        <div class="pencils decor" aria-hidden="true"><i></i><i></i></div>
+
+        <article class="book" id="book" aria-live="polite">
+          <div class="book-cover">
+            <p>STUDYOS</p>
+            <button id="coverStart" type="button" aria-label="Begin your study ritual"><span>&#9654;</span> Begin the ritual</button>
+            <small>One quiet reset. Then deep work.</small>
+          </div>
+          <section class="page page-left">
+            <p class="eyebrow">CURRENT RITUAL</p>
+            <div class="phase-mark" id="phaseMark" aria-hidden="true">&#9675;</div>
+            <p class="phase-label" id="phaseLabel">Wall stare</p>
+            <p class="phase-detail" id="phaseDetail">Settle in. Let your mind get quiet.</p>
+            <div class="tree-status"><span id="treeMessage">Your focus tree is a seedling.</span><strong id="sessionCount">0</strong><small>Pomodoros</small></div>
+          </section>
+
+          <section class="page page-right">
+            <p class="eyebrow" id="rightEyebrow">BEGIN WITH STILLNESS</p>
+            <h1 id="headline">Look at the wall.<br />Do nothing else.</h1>
+            <p class="reason" id="reason">Three quiet minutes create a clean edge between everyday noise and focused work.</p>
+            <div class="break-thought" id="breakThought" hidden><span>THOUGHT FOR THE PAUSE</span><q id="quoteText"></q></div>
+            <time class="timer" id="timer" datetime="PT3M">03:00</time>
+            <div class="timer-rule"><span id="progressBar"></span></div>
+            <div class="controls">
+              <button class="button button-primary" id="startButton" type="button">Start ritual</button>
+              <button class="button button-quiet" id="resetButton" type="button">Reset</button>
+            </div>
+          </section>
+        </article>
+      </section>
+
+      <!-- ── Sound dock ── -->
+      <section class="sound-dock" aria-label="Ambient sounds">
+        <span>AMBIENCE</span>
+        <button type="button" data-ambient="rain">Rain</button>
+        <button type="button" data-ambient="cafe">Caf&eacute;</button>
+        <button type="button" data-ambient="forest">Forest</button>
+        <button type="button" data-ambient="brown">Brown</button>
+        <button type="button" data-ambient="off" class="sound-off">Off</button>
+      </section>
+      <p class="desk-note">One task. One breath. One page at a time.</p>
+
+      <!-- ── Completion overlay ── -->
+      <div class="completion" id="completion" aria-live="assertive" aria-hidden="true">
+        <div>
+          <span>&#10022;</span>
+          <p>Focus session complete</p>
+          <strong>Another ring for your tree.</strong>
+          <div class="completion-streak" id="completionStreak"></div>
+        </div>
+      </div>
+    </main>
+
+    <!-- DEV skip button — remove before publishing -->
+    <button class="dev-next" id="devNext" type="button" title="[DEV] Skip to next phase">&#9654;&#9654; next</button>
+
+    <script src="script.js"></script>
+  </body>
+</html>
