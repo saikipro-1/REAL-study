@@ -4,7 +4,7 @@ A calm, static Pomodoro space designed as a short ritual: one 3-minute wall star
 
 ## StudyOS features
 
-- A living morning → evening → night background as focus sessions build
+- A four-session time cycle: Day → Afternoon → Evening → Night, then back to Day after 100 minutes of focus
 - A guided opening sequence: closed book → wall-focus dot → opening book for deep work
 - Steam animation while the timer runs and a subtly opening book during deep work
 - Optional generated ambient soundscapes: soft rain, an audible café room tone, forest, and deep brown noise

@@ -48,12 +48,22 @@ function setContent() {
   el.breakThought.hidden = phase !== "break"; if (phase === "break") el.quoteText.textContent = quotes[Math.floor(Math.random() * quotes.length)];
 }
 function treeDescription(count) { return count === 0 ? "Your focus tree is a seedling." : count < 3 ? "A small branch reaches toward the light." : count < 6 ? "Your tree is finding its shape." : "A calm little forest is taking root."; }
-function setMood() { el.studyOS.classList.toggle("evening", sessions >= 2 && sessions < 4); el.studyOS.classList.toggle("night", sessions >= 4); }
+function setMood() {
+  // The break keeps the atmosphere of the focus block just completed.
+  const cycleStep = phase === "break" ? (sessions + 3) % 4 : sessions % 4;
+  const mood = ["day", "afternoon", "evening", "night"][cycleStep];
+  el.studyOS.classList.remove("day", "afternoon", "evening", "night");
+  el.studyOS.classList.add(mood);
+}
 function setScene(scene) { el.studyOS.classList.remove("scene-idle", "scene-wall", "scene-lowering", "scene-focus"); el.studyOS.classList.add(`scene-${scene}`); }
 function render() {
   el.timer.textContent = formatTime(remaining); el.timer.dateTime = `PT${remaining}S`; el.wallTimer.textContent = formatTime(remaining); el.wallTimer.dateTime = `PT${remaining}S`;
   el.progressBar.style.width = `${((durations[phase] - remaining) / durations[phase]) * 100}%`;
-  el.sessionCount.textContent = sessions; el.tree.style.setProperty("--growth", Math.min(sessions, 7)); el.treeMessage.textContent = treeDescription(sessions);
+  el.sessionCount.textContent = sessions; el.tree.style.setProperty("--growth", Math.min(sessions, 7));
+  const cycle = phase === "break" && sessions > 0 ? Math.floor((sessions - 1) / 4) + 1 : Math.floor(sessions / 4) + 1;
+  const cycleStep = phase === "break" ? (sessions + 3) % 4 : sessions % 4;
+  const timeName = ["Daylight", "Afternoon", "Evening", "Night"][cycleStep];
+  el.treeMessage.textContent = `Cycle ${cycle} · ${timeName}. ${treeDescription(sessions)}`;
   el.streakCount.textContent = `${stats.days || 0} ${stats.days === 1 ? "day" : "days"}`; el.hoursCount.textContent = `${stats.hours.toFixed(1)} hrs`;
   el.startButton.textContent = running ? "Pause" : (remaining === durations[phase] && phase === "reset" ? "Start ritual" : "Resume");
   el.book.classList.toggle("is-focusing", running && phase === "focus"); document.querySelector(".mug").classList.toggle("is-steaming", running);
