@@ -7,7 +7,7 @@ A calm, static Pomodoro space designed as a short ritual: one 3-minute wall star
 - A living morning → evening → night background as focus sessions build
 - A guided opening sequence: closed book → wall-focus dot → opening book for deep work
 - Steam animation while the timer runs and a subtly opening book during deep work
-- Optional generated ambient soundscapes: soft rain, café, forest, and brown noise
+- Optional generated ambient soundscapes: soft rain, an audible café room tone, forest, and deep brown noise
 - Saved streak and deep-work-hour tracking (stored only in the visitor's browser)
 - A small focus tree that grows with each completed Pomodoro
 - A break activity plus a thoughtful pause quote

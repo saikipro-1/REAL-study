@@ -21,7 +21,7 @@ const quotes = [
 const el = Object.fromEntries(["studyOS", "book", "tree", "wallTimer", "coverStart", "phaseMark", "phaseLabel", "phaseDetail", "rightEyebrow", "headline", "reason", "breakThought", "quoteText", "timer", "progressBar", "startButton", "resetButton", "sessionCount", "treeMessage", "streakCount", "hoursCount", "completion"].map(id => [id, document.getElementById(id)]));
 
 let phase = "reset", remaining = durations.reset, running = false, intervalId = null, sessions = 0, lastActivity = -1;
-let soundContext = null, ambientNode = null, ambientTimer = null;
+let soundContext = null, ambientNodes = [], ambientTimer = null;
 const today = new Date().toISOString().slice(0, 10);
 const stats = JSON.parse(localStorage.getItem("studyOSStats") || "{\"days\":0,\"hours\":0,\"lastDate\":\"\"}");
 
@@ -83,18 +83,24 @@ function transitionToFocus() {
 }
 function toggleTimer() { if (el.studyOS.classList.contains("scene-idle")) { beginRitual(); return; } running = !running; if (running) { playChime("start"); intervalId = window.setInterval(tick, 1000); } else { playChime("pause"); window.clearInterval(intervalId); } render(); }
 
-function stopAmbient() { if (ambientNode) { try { ambientNode.stop(); } catch {} ambientNode = null; } window.clearInterval(ambientTimer); ambientTimer = null; document.querySelectorAll("[data-ambient]").forEach(button => button.classList.remove("active")); }
+function stopAmbient() { ambientNodes.forEach(node => { try { node.stop(); } catch {} }); ambientNodes = []; window.clearInterval(ambientTimer); ambientTimer = null; document.querySelectorAll("[data-ambient]").forEach(button => button.classList.remove("active")); }
 function noiseSource(context, volume, color = "white") {
   const length = context.sampleRate * 2, buffer = context.createBuffer(1, length, context.sampleRate), data = buffer.getChannelData(0); let previous = 0;
-  for (let i = 0; i < length; i += 1) { const white = Math.random() * 2 - 1; previous = color === "brown" ? (previous + .025 * white) / 1.025 : white; data[i] = previous; }
+  for (let i = 0; i < length; i += 1) { const white = Math.random() * 2 - 1; previous = color === "brown" ? (previous + .02 * white) / 1.02 : white; data[i] = color === "brown" ? previous * 3.5 : white; }
   const source = context.createBufferSource(), filter = context.createBiquadFilter(), gain = context.createGain();
-  filter.type = "lowpass"; filter.frequency.value = color === "rain" ? 850 : color === "brown" ? 420 : 1600;
+  filter.type = "lowpass"; filter.frequency.value = color === "rain" ? 750 : color === "brown" ? 650 : color === "cafe" ? 2400 : 1800;
   source.buffer = buffer; source.loop = true; gain.gain.value = volume; source.connect(filter).connect(gain).connect(context.destination); source.start(); return source;
+}
+function cafeRoomTone(context) {
+  const oscillator = context.createOscillator(), gain = context.createGain(), filter = context.createBiquadFilter();
+  oscillator.type = "triangle"; oscillator.frequency.value = 147; filter.type = "lowpass"; filter.frequency.value = 280;
+  gain.gain.value = .012; oscillator.connect(filter).connect(gain).connect(context.destination); oscillator.start(); return oscillator;
 }
 function startAmbient(type) {
   stopAmbient(); if (type === "off") return; const context = ensureContext(); if (!context) return;
-  const profile = { rain: [.012, "rain"], cafe: [.018, "brown"], forest: [.01, "white"], brown: [.024, "brown"] };
-  ambientNode = noiseSource(context, ...profile[type]);
+  const profile = { rain: [.012, "rain"], cafe: [.028, "cafe"], forest: [.012, "white"], brown: [.06, "brown"] };
+  ambientNodes.push(noiseSource(context, ...profile[type]));
+  if (type === "cafe") ambientNodes.push(cafeRoomTone(context));
   if (type === "forest") ambientTimer = window.setInterval(() => { const oscillator = context.createOscillator(), gain = context.createGain(); oscillator.type = "sine"; oscillator.frequency.value = 1100 + Math.random() * 900; gain.gain.setValueAtTime(.0001, context.currentTime); gain.gain.exponentialRampToValueAtTime(.018, context.currentTime + .03); gain.gain.exponentialRampToValueAtTime(.0001, context.currentTime + .25); oscillator.connect(gain).connect(context.destination); oscillator.start(); oscillator.stop(context.currentTime + .3); }, 1800);
   document.querySelector(`[data-ambient="${type}"]`).classList.add("active");
 }
