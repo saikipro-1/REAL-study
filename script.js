@@ -19,16 +19,21 @@ const quotes = [
   "Let this pause make space for what matters next."
 ];
 
-const el = Object.fromEntries(["studyOS", "book", "tree", "wallTimer", "coverStart", "phaseMark", "phaseLabel", "phaseDetail", "rightEyebrow", "headline", "reason", "breakThought", "quoteText", "timer", "progressBar", "startButton", "resetButton", "sessionCount", "treeMessage", "streakCount", "hoursCount", "completion"].map(id => [id, document.getElementById(id)]));
+const el = Object.fromEntries([
+  "studyOS", "book", "tree", "wallTimer", "coverStart", "phaseMark", "phaseLabel", 
+  "phaseDetail", "rightEyebrow", "headline", "reason", "breakThought", "quoteText", 
+  "timer", "progressBar", "startButton", "skipButton", "resetButton", "sessionCount", 
+  "treeMessage", "streakCount", "hoursCount", "completion", "viewStatsBtn", "statsModal", 
+  "closeStatsBtn", "modalStreak", "modalHours", "modalSessions", "streakNote"
+].map(id => [id, document.getElementById(id)]));
 
 let phase = "reset", remaining = durations.reset, running = false, intervalId = null, sessions = 0, lastActivity = -1;
 let soundContext = null, ambientNodes = [], ambientTimer = null;
 const today = new Date().toISOString().slice(0, 10);
 
-// Load or initialize user stats
+// Load or initialize stats from localStorage
 const stats = JSON.parse(localStorage.getItem("studyOSStats") || "{\"days\":0,\"hours\":0,\"lastDate\":\"\"}");
 
-// Check and maintain streak integrity on load
 function initStreak() {
   if (stats.lastDate) {
     const last = new Date(stats.lastDate);
@@ -57,27 +62,29 @@ function playChime(kind = "start") {
 }
 
 function chooseActivity() { let index; do index = Math.floor(Math.random() * activities.length); while (index === lastActivity && activities.length > 1); lastActivity = index; return activities[index]; }
+
 function setContent() {
   const content = phase === "break" ? { mark: "✦", label: "Recovery break", eyebrow: "PAUSE WITH PURPOSE", detail: "This five minutes is part of the work.", ...chooseActivity() } : phases[phase];
   el.phaseMark.textContent = content.mark; el.phaseLabel.textContent = content.label; el.phaseDetail.textContent = content.detail;
   el.rightEyebrow.textContent = content.eyebrow; el.headline.innerHTML = content.title || content.headline; el.reason.textContent = content.reason;
   el.breakThought.hidden = phase !== "break"; if (phase === "break") el.quoteText.textContent = quotes[Math.floor(Math.random() * quotes.length)];
 }
+
 function treeDescription(count) { return count === 0 ? "Your focus tree is a seedling." : count < 3 ? "A small branch reaches toward the light." : count < 6 ? "Your tree is finding its shape." : "A calm little forest is taking root."; }
+
 function setMood() {
   const cycleStep = phase === "break" ? (sessions + 3) % 4 : sessions % 4;
   const mood = ["day", "afternoon", "evening", "night"][cycleStep];
   el.studyOS.classList.remove("day", "afternoon", "evening", "night");
   el.studyOS.classList.add(mood);
 }
+
 function setScene(scene) { el.studyOS.classList.remove("scene-idle", "scene-wall", "scene-lowering", "scene-focus"); el.studyOS.classList.add(`scene-${scene}`); }
 
 function render() {
   el.timer.textContent = formatTime(remaining); el.timer.dateTime = `PT${remaining}S`; el.wallTimer.textContent = formatTime(remaining); el.wallTimer.dateTime = `PT${remaining}S`;
   el.progressBar.style.width = `${((durations[phase] - remaining) / durations[phase]) * 100}%`;
   el.sessionCount.textContent = sessions; 
-  
-  // Update tree/plant display growth variable
   el.tree.style.setProperty("--growth", Math.min(sessions, 7));
   
   const cycle = phase === "break" && sessions > 0 ? Math.floor((sessions - 1) / 4) + 1 : Math.floor(sessions / 4) + 1;
@@ -85,8 +92,18 @@ function render() {
   const timeName = ["Daylight", "Afternoon", "Evening", "Night"][cycleStep];
   
   el.treeMessage.textContent = `Cycle ${cycle} · ${timeName}. ${treeDescription(sessions)}`;
-  el.streakCount.textContent = `${stats.days || 0} ${stats.days === 1 ? "day" : "days"}`; 
-  el.hoursCount.textContent = `${stats.hours.toFixed(1)} hrs`;
+  
+  // HUD Update
+  const dayText = `${stats.days || 0} ${stats.days === 1 ? "day" : "days"}`;
+  const hoursText = `${stats.hours.toFixed(1)} hrs`;
+  el.streakCount.textContent = dayText; 
+  el.hoursCount.textContent = hoursText;
+  
+  // Modal Update
+  el.modalStreak.textContent = dayText;
+  el.modalHours.textContent = hoursText;
+  el.modalSessions.textContent = sessions;
+  
   el.startButton.textContent = running ? "Pause" : (remaining === durations[phase] && phase === "reset" ? "Start ritual" : "Resume");
   
   el.book.classList.toggle("is-focusing", running && phase === "focus"); 
@@ -122,18 +139,31 @@ function nextPhase() {
   remaining = durations[phase]; setContent(); if (navigator.vibrate) navigator.vibrate([120, 80, 120]); render();
 }
 
+function skipStep() {
+  nextPhase();
+}
+
 function tick() { remaining -= 1; if (remaining <= 0) nextPhase(); else render(); }
+
 function beginRitual() {
   if (running) return;
   phase = "reset"; remaining = durations.reset; setContent(); setScene("wall");
   playChime("start"); window.setTimeout(() => { running = true; intervalId = window.setInterval(tick, 1000); render(); }, 900);
   render();
 }
+
 function transitionToFocus() {
   running = false; window.clearInterval(intervalId); setScene("lowering"); playChime("pause");
   window.setTimeout(() => { phase = "focus"; remaining = durations.focus; setContent(); setScene("focus"); running = true; playChime("start"); intervalId = window.setInterval(tick, 1000); render(); }, 1050);
 }
-function toggleTimer() { if (el.studyOS.classList.contains("scene-idle")) { beginRitual(); return; } running = !running; if (running) { playChime("start"); intervalId = window.setInterval(tick, 1000); } else { playChime("pause"); window.clearInterval(intervalId); } render(); }
+
+function toggleTimer() { 
+  if (el.studyOS.classList.contains("scene-idle")) { beginRitual(); return; } 
+  running = !running; 
+  if (running) { playChime("start"); intervalId = window.setInterval(tick, 1000); } 
+  else { playChime("pause"); window.clearInterval(intervalId); } 
+  render(); 
+}
 
 function stopAmbient() { ambientNodes.forEach(node => { try { node.stop(); } catch {} }); ambientNodes = []; window.clearInterval(ambientTimer); ambientTimer = null; document.querySelectorAll("[data-ambient]").forEach(button => button.classList.remove("active")); }
 function noiseSource(context, volume, color = "white") {
@@ -157,10 +187,16 @@ function startAmbient(type) {
   document.querySelector(`[data-ambient="${type}"]`).classList.add("active");
 }
 
+// Event Listeners
 el.startButton.addEventListener("click", toggleTimer);
+el.skipButton.addEventListener("click", skipStep);
 el.coverStart.addEventListener("click", beginRitual);
 el.resetButton.addEventListener("click", () => { window.clearInterval(intervalId); phase = "reset"; remaining = durations.reset; running = false; sessions = 0; lastActivity = -1; setScene("idle"); setContent(); render(); });
 document.querySelectorAll("[data-ambient]").forEach(button => button.addEventListener("click", () => startAmbient(button.dataset.ambient)));
+
+// Modal Listeners
+el.viewStatsBtn.addEventListener("click", () => { el.statsModal.classList.add("show"); el.statsModal.setAttribute("aria-hidden", "false"); });
+el.closeStatsBtn.addEventListener("click", () => { el.statsModal.classList.remove("show"); el.statsModal.setAttribute("aria-hidden", "true"); });
 
 initStreak();
 setContent(); 
