@@ -16,6 +16,7 @@
         <div class="metrics" aria-label="Your study progress">
           <div><span>STREAK</span><strong id="streakCount">0 days</strong></div>
           <div><span>DEEP WORK</span><strong id="hoursCount">0.0 hrs</strong></div>
+          <button id="viewStatsBtn" class="hud-btn" type="button" aria-label="View streak details">🔥 Stats</button>
         </div>
       </header>
 
@@ -52,7 +53,11 @@
             <div class="break-thought" id="breakThought" hidden><span>THOUGHT FOR THE PAUSE</span><q id="quoteText"></q></div>
             <time class="timer" id="timer" datetime="PT3M">03:00</time>
             <div class="timer-rule"><span id="progressBar"></span></div>
-            <div class="controls"><button class="button button-primary" id="startButton" type="button">Start ritual</button><button class="button button-quiet" id="resetButton" type="button">Reset</button></div>
+            <div class="controls">
+              <button class="button button-primary" id="startButton" type="button">Start ritual</button>
+              <button class="button button-skip" id="skipButton" type="button" title="Skip to next step">Skip &#9197;</button>
+              <button class="button button-quiet" id="resetButton" type="button">Reset</button>
+            </div>
           </section>
         </article>
       </section>
@@ -67,7 +72,34 @@
       </section>
       <p class="desk-note">One task. One breath. One page at a time.</p>
 
+      <!-- Completion Toast -->
       <div class="completion" id="completion" aria-live="assertive" aria-hidden="true"><div><span>&#10022;</span><p>Focus session complete</p><strong>Another ring for your tree.</strong></div></div>
+
+      <!-- Streak / Stats Modal -->
+      <div class="stats-modal" id="statsModal" aria-hidden="true">
+        <div class="stats-card">
+          <button class="close-modal" id="closeStatsBtn" type="button">&times;</button>
+          <h2>Your Focus Progress</h2>
+          <div class="stats-grid">
+            <div class="stat-box">
+              <span class="stat-icon">🔥</span>
+              <strong id="modalStreak">0 days</strong>
+              <small>Current Streak</small>
+            </div>
+            <div class="stat-box">
+              <span class="stat-icon">⏳</span>
+              <strong id="modalHours">0.0 hrs</strong>
+              <small>Total Deep Work</small>
+            </div>
+            <div class="stat-box">
+              <span class="stat-icon">🌳</span>
+              <strong id="modalSessions">0</strong>
+              <small>Pomodoros Finished</small>
+            </div>
+          </div>
+          <p class="stats-note" id="streakNote">Complete at least 1 Pomodoro session every day to build your streak!</p>
+        </div>
+      </div>
     </main>
     <script src="script.js"></script>
   </body>
