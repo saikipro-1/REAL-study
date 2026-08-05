@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <main class="study-os" id="studyOS">
+    <main class="study-os scene-idle" id="studyOS">
       <div class="sky" aria-hidden="true"><i class="sun-moon"></i><div class="stars"></div></div>
 
       <header class="hud">
@@ -21,12 +21,24 @@
 
       <aside class="phone-policy" aria-label="No phone policy"><span aria-hidden="true">&#x26A1;</span><div><strong>NO PHONE</strong><small>out of reach</small></div></aside>
 
+      <section class="wall-focus" id="wallFocus" aria-live="polite" aria-label="Wall staring ritual">
+        <div class="wall-dot" aria-hidden="true"></div>
+        <p>REST YOUR EYES HERE</p>
+        <time id="wallTimer" datetime="PT3M">03:00</time>
+        <small>Let every other thought pass by.</small>
+      </section>
+
       <section class="desk" aria-label="Your virtual study desk">
         <div class="tree decor" id="tree" aria-label="Your focus tree"><div class="tree-crown"><i></i><i></i><i></i></div><b></b><em></em></div>
         <div class="mug decor" aria-hidden="true"><span class="steam"><i></i><i></i><i></i></span><b></b><i class="coffee"></i></div>
         <div class="pencils decor" aria-hidden="true"><i></i><i></i></div>
 
         <article class="book" id="book" aria-live="polite">
+          <div class="book-cover">
+            <p>STUDYOS</p>
+            <button id="coverStart" type="button" aria-label="Begin your study ritual"><span>&#9654;</span> Begin the ritual</button>
+            <small>One quiet reset. Then deep work.</small>
+          </div>
           <section class="page page-left">
             <p class="eyebrow">CURRENT RITUAL</p>
             <div class="phase-mark" id="phaseMark" aria-hidden="true">&#9675;</div>
@@ -52,6 +64,7 @@
         <button type="button" data-ambient="rain">Rain</button>
         <button type="button" data-ambient="cafe">Caf&eacute;</button>
         <button type="button" data-ambient="forest">Forest</button>
+        <button type="button" data-ambient="brown">Brown</button>
         <button type="button" data-ambient="off" class="sound-off">Off</button>
       </section>
       <p class="desk-note">One task. One breath. One page at a time.</p>

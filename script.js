@@ -18,7 +18,7 @@ const quotes = [
   "Attention is the beginning of devotion.",
   "Let this pause make space for what matters next."
 ];
-const el = Object.fromEntries(["studyOS", "book", "tree", "phaseMark", "phaseLabel", "phaseDetail", "rightEyebrow", "headline", "reason", "breakThought", "quoteText", "timer", "progressBar", "startButton", "resetButton", "sessionCount", "treeMessage", "streakCount", "hoursCount", "completion"].map(id => [id, document.getElementById(id)]));
+const el = Object.fromEntries(["studyOS", "book", "tree", "wallTimer", "coverStart", "phaseMark", "phaseLabel", "phaseDetail", "rightEyebrow", "headline", "reason", "breakThought", "quoteText", "timer", "progressBar", "startButton", "resetButton", "sessionCount", "treeMessage", "streakCount", "hoursCount", "completion"].map(id => [id, document.getElementById(id)]));
 
 let phase = "reset", remaining = durations.reset, running = false, intervalId = null, sessions = 0, lastActivity = -1;
 let soundContext = null, ambientNode = null, ambientTimer = null;
@@ -49,8 +49,9 @@ function setContent() {
 }
 function treeDescription(count) { return count === 0 ? "Your focus tree is a seedling." : count < 3 ? "A small branch reaches toward the light." : count < 6 ? "Your tree is finding its shape." : "A calm little forest is taking root."; }
 function setMood() { el.studyOS.classList.toggle("evening", sessions >= 2 && sessions < 4); el.studyOS.classList.toggle("night", sessions >= 4); }
+function setScene(scene) { el.studyOS.classList.remove("scene-idle", "scene-wall", "scene-lowering", "scene-focus"); el.studyOS.classList.add(`scene-${scene}`); }
 function render() {
-  el.timer.textContent = formatTime(remaining); el.timer.dateTime = `PT${remaining}S`;
+  el.timer.textContent = formatTime(remaining); el.timer.dateTime = `PT${remaining}S`; el.wallTimer.textContent = formatTime(remaining); el.wallTimer.dateTime = `PT${remaining}S`;
   el.progressBar.style.width = `${((durations[phase] - remaining) / durations[phase]) * 100}%`;
   el.sessionCount.textContent = sessions; el.tree.style.setProperty("--growth", Math.min(sessions, 7)); el.treeMessage.textContent = treeDescription(sessions);
   el.streakCount.textContent = `${stats.days || 0} ${stats.days === 1 ? "day" : "days"}`; el.hoursCount.textContent = `${stats.hours.toFixed(1)} hrs`;
@@ -64,28 +65,42 @@ function recordCompletion() {
   saveStats(); el.completion.classList.add("show"); el.completion.setAttribute("aria-hidden", "false"); window.setTimeout(() => { el.completion.classList.remove("show"); el.completion.setAttribute("aria-hidden", "true"); }, 2800);
 }
 function nextPhase() {
-  if (phase === "reset") phase = "focus";
+  if (phase === "reset") { transitionToFocus(); return; }
   else if (phase === "focus") { recordCompletion(); phase = "break"; playChime("complete"); }
   else { phase = "focus"; playChime("start"); }
   remaining = durations[phase]; setContent(); if (navigator.vibrate) navigator.vibrate([120, 80, 120]); render();
 }
 function tick() { remaining -= 1; if (remaining <= 0) nextPhase(); else render(); }
-function toggleTimer() { running = !running; if (running) { playChime("start"); intervalId = window.setInterval(tick, 1000); } else { playChime("pause"); window.clearInterval(intervalId); } render(); }
+function beginRitual() {
+  if (running) return;
+  phase = "reset"; remaining = durations.reset; setContent(); setScene("wall");
+  playChime("start"); window.setTimeout(() => { running = true; intervalId = window.setInterval(tick, 1000); render(); }, 900);
+  render();
+}
+function transitionToFocus() {
+  running = false; window.clearInterval(intervalId); setScene("lowering"); playChime("pause");
+  window.setTimeout(() => { phase = "focus"; remaining = durations.focus; setContent(); setScene("focus"); running = true; playChime("start"); intervalId = window.setInterval(tick, 1000); render(); }, 1050);
+}
+function toggleTimer() { if (el.studyOS.classList.contains("scene-idle")) { beginRitual(); return; } running = !running; if (running) { playChime("start"); intervalId = window.setInterval(tick, 1000); } else { playChime("pause"); window.clearInterval(intervalId); } render(); }
 
 function stopAmbient() { if (ambientNode) { try { ambientNode.stop(); } catch {} ambientNode = null; } window.clearInterval(ambientTimer); ambientTimer = null; document.querySelectorAll("[data-ambient]").forEach(button => button.classList.remove("active")); }
 function noiseSource(context, volume, color = "white") {
   const length = context.sampleRate * 2, buffer = context.createBuffer(1, length, context.sampleRate), data = buffer.getChannelData(0); let previous = 0;
-  for (let i = 0; i < length; i += 1) { const white = Math.random() * 2 - 1; previous = color === "brown" ? (previous + .02 * white) / 1.02 : white; data[i] = previous; }
-  const source = context.createBufferSource(), gain = context.createGain(); source.buffer = buffer; source.loop = true; gain.gain.value = volume; source.connect(gain).connect(context.destination); source.start(); return source;
+  for (let i = 0; i < length; i += 1) { const white = Math.random() * 2 - 1; previous = color === "brown" ? (previous + .025 * white) / 1.025 : white; data[i] = previous; }
+  const source = context.createBufferSource(), filter = context.createBiquadFilter(), gain = context.createGain();
+  filter.type = "lowpass"; filter.frequency.value = color === "rain" ? 850 : color === "brown" ? 420 : 1600;
+  source.buffer = buffer; source.loop = true; gain.gain.value = volume; source.connect(filter).connect(gain).connect(context.destination); source.start(); return source;
 }
 function startAmbient(type) {
   stopAmbient(); if (type === "off") return; const context = ensureContext(); if (!context) return;
-  ambientNode = noiseSource(context, type === "rain" ? .045 : .025, type === "cafe" ? "brown" : "white");
+  const profile = { rain: [.012, "rain"], cafe: [.018, "brown"], forest: [.01, "white"], brown: [.024, "brown"] };
+  ambientNode = noiseSource(context, ...profile[type]);
   if (type === "forest") ambientTimer = window.setInterval(() => { const oscillator = context.createOscillator(), gain = context.createGain(); oscillator.type = "sine"; oscillator.frequency.value = 1100 + Math.random() * 900; gain.gain.setValueAtTime(.0001, context.currentTime); gain.gain.exponentialRampToValueAtTime(.018, context.currentTime + .03); gain.gain.exponentialRampToValueAtTime(.0001, context.currentTime + .25); oscillator.connect(gain).connect(context.destination); oscillator.start(); oscillator.stop(context.currentTime + .3); }, 1800);
   document.querySelector(`[data-ambient="${type}"]`).classList.add("active");
 }
 
 el.startButton.addEventListener("click", toggleTimer);
-el.resetButton.addEventListener("click", () => { window.clearInterval(intervalId); phase = "reset"; remaining = durations.reset; running = false; sessions = 0; lastActivity = -1; setContent(); render(); });
+el.coverStart.addEventListener("click", beginRitual);
+el.resetButton.addEventListener("click", () => { window.clearInterval(intervalId); phase = "reset"; remaining = durations.reset; running = false; sessions = 0; lastActivity = -1; setScene("idle"); setContent(); render(); });
 document.querySelectorAll("[data-ambient]").forEach(button => button.addEventListener("click", () => startAmbient(button.dataset.ambient)));
 setContent(); render();
